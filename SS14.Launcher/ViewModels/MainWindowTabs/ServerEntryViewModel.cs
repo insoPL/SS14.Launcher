@@ -81,6 +81,8 @@ public sealed class ServerEntryViewModel : ObservableRecipient, IRecipient<Favor
     private bool IsFavorite => _cfg.FavoriteServers.Lookup(Address).HasValue;
 
     public bool ViewedInFavoritesPane { get; set; }
+    
+    public bool ShowPingColl { get; set; }
 
     public bool HaveData => _cacheData.Status == ServerStatusCode.Online;
 
@@ -106,6 +108,24 @@ public sealed class ServerEntryViewModel : ObservableRecipient, IRecipient<Favor
         _loc.GetString("server-entry-player-count",
             ("players", _cacheData.PlayerCount), ("max", _cacheData.SoftMaxPlayerCount));
 
+    public string? PingTimeString
+    {
+        get
+        {
+            if (_cacheData.PingTime == -1)
+            {
+                return "pinging...";
+            }
+            else if (_cacheData.PingTime == -2)
+            {
+                return "Timed Out";
+            }
+            else
+            {
+                return _cacheData.PingTime.ToString() + "ms";
+            }
+        }
+    }
 
     public DateTime? RoundStartTime => _cacheData.RoundStartTime;
 
@@ -261,6 +281,9 @@ public sealed class ServerEntryViewModel : ObservableRecipient, IRecipient<Favor
             case nameof(IServerStatusData.StatusInfo):
                 OnPropertyChanged(nameof(Description));
                 OnPropertyChanged(nameof(HaveData));
+                break;
+            case nameof(IServerStatusData.PingTime):
+                OnPropertyChanged(nameof(PingTimeString));
                 break;
         }
     }

@@ -30,4 +30,6 @@ public interface IServerStatusData : INotifyPropertyChanged
     DateTime? RoundStartTime { get; set; }
 
     GameRoundStatus RoundStatus { get; set; }
+
+    int? PingTime { get; set; }
 }

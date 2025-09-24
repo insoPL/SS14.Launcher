@@ -8,7 +8,7 @@ public sealed class ServerStatusData : ObservableObject, IServerStatusData
 {
     private string? _name;
     private string? _desc;
-    private TimeSpan? _ping;
+    private int? _pingTime;
     private int _playerCount;
     private int _softMaxPlayerCount;
     private DateTime? _roundStartTime;
@@ -43,13 +43,10 @@ public sealed class ServerStatusData : ObservableObject, IServerStatusData
         get => _desc;
         set => SetProperty(ref _desc, value);
     }
-
-    // BUG: This ping stat is completely wrong currently.
-    // See the assignment in ServerStatusCache.cs for why.
-    public TimeSpan? Ping
+    public int? PingTime
     {
-        get => _ping;
-        set => SetProperty(ref _ping, value);
+        get => _pingTime;
+        set => SetProperty(ref _pingTime, value);
     }
 
     public ServerStatusCode Status

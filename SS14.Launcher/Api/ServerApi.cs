@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
@@ -14,6 +14,7 @@ public static class ServerApi
         [property: JsonPropertyName("soft_max_players")]
         int SoftMaxPlayerCount,
         [property: JsonPropertyName("round_start_time")] string? RoundStartTime,
+        [property: JsonPropertyName("ping_time")] int? PingTime,
         [property: JsonPropertyName("run_level")] GameRunLevel? RunLevel,
         [property: JsonPropertyName("tags")] string[]? Tags);
 

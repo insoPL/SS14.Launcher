@@ -5,6 +5,7 @@ using SS14.Launcher.Localization;
 using SS14.Launcher.Models.ContentManagement;
 using SS14.Launcher.Models.Data;
 using SS14.Launcher.Models.EngineManager;
+using SS14.Launcher.Models.ServerStatus;
 using SS14.Launcher.Utility;
 
 namespace SS14.Launcher.ViewModels.MainWindowTabs;
@@ -14,6 +15,7 @@ public class OptionsTabViewModel : MainWindowTabViewModel
     public DataManager Cfg { get; }
     private readonly IEngineManager _engineManager;
     private readonly ContentManager _contentManager;
+    private readonly ServerListCache _statusCache;
 
     public LanguageSelectorViewModel Language { get; } = new();
 
@@ -22,6 +24,7 @@ public class OptionsTabViewModel : MainWindowTabViewModel
         Cfg = Locator.Current.GetRequiredService<DataManager>();
         _engineManager = Locator.Current.GetRequiredService<IEngineManager>();
         _contentManager = Locator.Current.GetRequiredService<ContentManager>();
+        _statusCache = Locator.Current.GetRequiredService<ServerListCache>();
 
         DisableIncompatibleMacOS = OperatingSystem.IsMacOS();
     }
@@ -72,6 +75,16 @@ public class OptionsTabViewModel : MainWindowTabViewModel
         {
             Cfg.SetCVar(CVars.OverrideAssets, value);
             Cfg.CommitConfig();
+        }
+    }
+    public bool FavoritePinging
+    {
+        get => Cfg.GetCVar(CVars.FavoritePinging);
+        set
+        {
+            Cfg.SetCVar(CVars.FavoritePinging, value);
+            Cfg.CommitConfig();
+            _statusCache.RequestRefresh();
         }
     }
 

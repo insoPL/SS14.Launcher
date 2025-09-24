@@ -50,18 +50,35 @@ public sealed class ServerStatusCache : IServerSource
     /// <summary>
     ///     Do the initial status update for a server status. This only acts once.
     /// </summary>
-    public void InitialUpdateStatus(ServerStatusData data)
+    public async Task UpdateStatus(ServerStatusData data, bool forceRefresh = false)
     {
         var reg = _cachedData[data.Address];
-        if (reg.DidInitialStatusUpdate)
+        if (reg.DidInitialStatusUpdate && !forceRefresh)
             return;
 
-        UpdateStatusFor(reg);
+        reg.DidInitialStatusUpdate = true;
+        data.PingTime = -1;
+
+        // Start both tasks simultaneously
+        var updateTask = UpdateStatusFor(reg);
+        var pingTask = PingingTools.GetPingTime(reg.Data.Address);
+
+        try
+        {
+            await Task.WhenAll(updateTask, pingTask);
+            var pingTime = pingTask.Result;
+
+            data.PingTime = (int)pingTime;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "An error occurred during concurrent status and ping updates for server {ServerAddress}", data.Address);
+            data.Status = ServerStatusCode.Offline;
+        }
     }
 
-    private async void UpdateStatusFor(CacheReg reg)
+    private async Task UpdateStatusFor(CacheReg reg)
     {
-        reg.DidInitialStatusUpdate = true;
         await reg.Semaphore.WaitAsync();
         var cancelSource = reg.Cancellation = new CancellationTokenSource();
         var cancel = cancelSource.Token;
@@ -214,7 +231,7 @@ public sealed class ServerStatusCache : IServerSource
             datum.Data.Links = null;
             datum.Data.Description = null;
 
-            UpdateStatusFor(datum);
+            _ = UpdateStatus(datum.Data, true);
         }
     }
 
