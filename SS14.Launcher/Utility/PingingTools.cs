@@ -53,7 +53,6 @@ namespace SS14.Launcher.Utility
             }
             else if (roundtripTimes.Any())
             {
-                // Return the average of the successful pings.
                 return (long)roundtripTimes.Average();
             }
 
