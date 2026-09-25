@@ -14,7 +14,7 @@
 
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <DockPanel>
-      <Button Content="{loc:Loc tab-options-flip}" DockPanel.Dock="Bottom" HorizontalAlignment="Right" Name="Flip" />
+      <Button Content="{loc:Loc tab-options-flip}" DockPanel.Dock="Bottom" HorizontalAlignment="Right" Click="Flip" />
       <Button Name="ClearEnginesButton" Content="{loc:Loc tab-options-clear-engines}" DockPanel.Dock="Bottom"
               HorizontalAlignment="Left" Click="ClearEnginesPressed" />
       <Button Name="ClearServerContentButton" Content="{loc:Loc tab-options-clear-content}" DockPanel.Dock="Bottom"
@@ -54,11 +54,6 @@
         <CheckBox VerticalAlignment="Center" Margin="4" IsChecked="{Binding FavoritePinging}" Content="{loc:Loc tab-options-favorite-pinging}" />
         <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
                    Text="{loc:Loc tab-options-favorite-pinging-desc}"
-                   Margin="8" />
-
-        <CheckBox VerticalAlignment="Center" IsVisible="{Binding !HideDisableSigning}" Margin="4" IsChecked="{Binding DisableSigning}" Content="{loc:Loc tab-options-disable-signing}" />
-        <TextBlock VerticalAlignment="Center" IsVisible="{Binding !HideDisableSigning}" TextWrapping="Wrap"
-                   Text="{loc:Loc tab-options-disable-signing-desc}"
                    Margin="8" />
 
         <Button Click="OpenHubSettings" Content="{loc:Loc tab-options-hub-settings}" Margin="4" HorizontalAlignment="Left" />

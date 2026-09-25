@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import subprocess
-import shutil
 import glob
+import os
+import shutil
+import subprocess
 
-from download_net_runtime import update_netcore_runtime, PLATFORM_WINDOWS, PLATFORM_WINDOWS_ARM64, PLATFORM_LINUX, PLATFORM_LINUX_ARM64, PLATFORM_MACOS, PLATFORM_MACOS_ARM64
+from download_net_runtime import (
+    PLATFORM_LINUX,
+    PLATFORM_LINUX_ARM64,
+    PLATFORM_MACOS,
+    PLATFORM_MACOS_ARM64,
+    PLATFORM_WINDOWS,
+    PLATFORM_WINDOWS_ARM64,
+    update_netcore_runtime,
+)
 from exe_set_subsystem import set_subsystem
 
-TFM = "net9.0"
+TFM = "net10.0"
 
 p = os.path.join
 
@@ -111,6 +119,7 @@ def publish_linux(x64_only: bool):
 
     shutil.copyfile("PublishFiles/SS14.Launcher", "bin/publish/Linux/SS14.Launcher")
     shutil.copyfile("PublishFiles/SS14.desktop", "bin/publish/Linux/SS14.desktop")
+    shutil.copyfile("SS14.Launcher/Assets/icon.ico", "bin/publish/Linux/SS14.ico")
 
     shutil.make_archive("SS14.Launcher_Linux", "zip", "bin/publish/Linux")
 

@@ -1,7 +1,7 @@
 # Strings for the drop-down window to manage your active account
 account-drop-down-none-selected = Aucun compte sélectionné
 # Strings for the drop-down window to manage your active account
-account-drop-down-not-logged-in = Non connecté
+account-drop-down-not-logged-in = Déconnecté
 # Strings for the drop-down window to manage your active account
 account-drop-down-log-out = Se déconnecter
 # Strings for the drop-down window to manage your active account
@@ -64,7 +64,7 @@ connecting-update-status-loading-content-bundle = Chargement du paquet de conten
 # Strings for the "connecting" menu that appears when connecting to a server.
 connecting-update-status-unknown = Vous ne devriez pas voir ça
 # Strings for the "direct connect" dialog window.
-direct-connect-title = Connexion Directe…
+direct-connect-title = Connexion Directe
 # Strings for the "direct connect" dialog window.
 direct-connect-text = Entrez l'adresse du serveur :
 # Strings for the "direct connect" dialog window.
@@ -235,7 +235,7 @@ tab-servers-list-status-updating-master = Récupération de la liste du serveur 
 # Strings for the "servers" tab
 tab-servers-table-name = Nom du Serveur
 # Strings for the "servers" tab
-tab-servers-list-status-partial-error = Échec de la récupération d'une partie des listes de serveurs. Assurez-vous que la configuration de votre hub est correcte et essayez de rafraîchir.
+tab-servers-list-status-partial-error = Échec de la récupération d'une partie des listes de serveurs. Assurez-vous que la configuration de votre hub est correcte et essayez de d'actualiser.
 # Strings for the "servers" tab
 filters = Filtres ({ $filteredServers } / { $totalServers })
 # Strings for the "servers" tab
@@ -261,11 +261,11 @@ filters-18-no = Non
 # Strings for the server filters menu
 filters-18-no-desc = Non
 # Strings for the server filters menu
-filters-player-count-minimum = Minimum:
+filters-player-count-minimum = Minimum :
 # Strings for the server filters menu
 filters-player-count-minimum-desc = Les serveurs avec moins de joueurs ne seront pas affichés
 # Strings for the server filters menu
-filters-player-count-maximum = Maximum:
+filters-player-count-maximum = Maximum :
 # Strings for the server filters menu
 filters-player-count-maximum-desc = Les serveurs avec plus de joueurs ne seront pas affichés
 # Strings for the server filters menu
@@ -322,7 +322,7 @@ filters-player-count-hide-full = Masquer les serveurs pleins
 # Strings for the server filters menu
 filters-player-count-hide-full-desc = Les serveurs pleins ne seront pas affichés
 # Strings for entries in the server list (including home page)
-server-entry-remove-favorite = Supprimer des favoris
+server-entry-remove-favorite = Retirer des favoris
 # Strings for entries in the server list (including home page)
 server-entry-description-offline = Impossible de contacter le serveur
 # Strings for entries in the server list (including home page)
@@ -348,7 +348,7 @@ tab-home-title = Accueil
 # Strings for the "home" tab
 tab-home-refresh = Actualiser
 # Strings for the "home" tab
-tab-home-direct-connect = Connexion Directe au serveur…
+tab-home-direct-connect = Connexion directe au serveur
 # Strings for the "home" tab
 tab-home-go-to-servers-tab = Aller dans l'onglet Serveurs
 # Strings for the "home" tab
@@ -384,7 +384,7 @@ tab-options-account-settings = Paramètres du compte
 # Strings for the "options" tab
 tab-options-account-settings-desc = Vous pouvez gérer les paramètres de votre compte, tels que la modification de votre adresse mail ou de votre mot de passe, via notre site internet.
 # Strings for the "home" tab
-tab-home-favorite-servers = Serveurs Favoris:
+tab-home-favorite-servers = Serveurs Favoris
 # Strings for the "options" tab
 tab-options-log-launcher-desc = Active l'historique d'activité du launcher. Utile pour les développeurs. (nécessite de redémarrer le launcher)
 # Strings for the "news" tab
@@ -476,7 +476,7 @@ region-oceania = Océanie
 # Long region names for server tag filters (shown in tooltip)
 region-south-america-east = Amérique du Sud Est
 # Long region names for server tag filters (shown in tooltip)
-region-south-america-south = Amérique du Sud Sud
+region-south-america-south = Amérique du Sud
 # Long region names for server tag filters (shown in tooltip)
 region-south-america-west = Amérique du Sud Ouest
 # Short region names for server tag filters (shown in filter check box)
@@ -529,7 +529,7 @@ region-short-south-america-west = SA Ouest
 # Short region names for server tag filters (shown in filter check box)
 region-short-south-america-east = SA Est
 # Strings for the "home" tab
-tab-home-add-favorite = Ajouter aux Favoris…
+tab-home-add-favorite = Ajouter aux favoris
 # Strings for the "options" tab
 tab-options-flip = { "*" }retourner
 login-login-show-password = Afficher le mot de passe

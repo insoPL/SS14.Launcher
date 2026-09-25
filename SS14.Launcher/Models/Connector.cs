@@ -14,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
 using DynamicData;
-using ReactiveUI;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Serilog;
 using Splat;
 using SS14.Launcher.Models.Data;
@@ -28,48 +28,21 @@ namespace SS14.Launcher.Models;
 /// Responsible for actually launching the game.
 /// Either by connecting to a game server, or by launching a local content bundle.
 /// </summary>
-public partial class Connector : ReactiveObject
+public partial class Connector : ObservableObject
 {
-    private readonly Updater _updater;
-    private readonly DataManager _cfg;
-    private readonly LoginManager _loginManager;
-    private readonly IEngineManager _engineManager;
+    private readonly Updater _updater = Locator.Current.GetRequiredService<Updater>();
+    private readonly DataManager _cfg = Locator.Current.GetRequiredService<DataManager>();
+    private readonly LoginManager _loginManager = Locator.Current.GetRequiredService<LoginManager>();
+    private readonly IEngineManager _engineManager = Locator.Current.GetRequiredService<IEngineManager>();
 
-    private ConnectionStatus _status = ConnectionStatus.None;
-    private bool _clientExitedBadly;
-    private readonly HttpClient _http;
+    private readonly HttpClient _http = Locator.Current.GetRequiredService<HttpClient>();
 
     private TaskCompletionSource<PrivacyPolicyAcceptResult>? _acceptPrivacyPolicyTcs;
-    private ServerPrivacyPolicyInfo? _serverPrivacyPolicyInfo;
-    private bool _privacyPolicyDifferentVersion;
 
-    public Connector()
-    {
-        _updater = Locator.Current.GetRequiredService<Updater>();
-        _cfg = Locator.Current.GetRequiredService<DataManager>();
-        _loginManager = Locator.Current.GetRequiredService<LoginManager>();
-        _engineManager = Locator.Current.GetRequiredService<IEngineManager>();
-        _http = Locator.Current.GetRequiredService<HttpClient>();
-    }
-
-    public ConnectionStatus Status
-    {
-        get => _status;
-        private set => this.RaiseAndSetIfChanged(ref _status, value);
-    }
-
-    public bool ClientExitedBadly
-    {
-        get => _clientExitedBadly;
-        private set => this.RaiseAndSetIfChanged(ref _clientExitedBadly, value);
-    }
-
-    public ServerPrivacyPolicyInfo? PrivacyPolicyInfo => _serverPrivacyPolicyInfo;
-    public bool PrivacyPolicyDifferentVersion
-    {
-        get => _privacyPolicyDifferentVersion;
-        private set => this.RaiseAndSetIfChanged(ref _privacyPolicyDifferentVersion, value);
-    }
+    [ObservableProperty] private ConnectionStatus _status = ConnectionStatus.None;
+    [ObservableProperty] private bool _clientExitedBadly;
+    [ObservableProperty] private bool _privacyPolicyDifferentVersion;
+    public ServerPrivacyPolicyInfo? PrivacyPolicyInfo { get; private set; }
 
     public async void Connect(string address, CancellationToken cancel = default)
     {
@@ -128,7 +101,10 @@ public partial class Connector : ReactiveObject
         // Run update.
         Status = ConnectionStatus.Updating;
 
-        var installation = await RunUpdateAsync(info, cancel);
+        // Must have been set when retrieving build info (inferred to be automatic zipping).
+        Debug.Assert(info.BuildInformation != null, "info.BuildInformation != null");
+
+        var installation = await RunUpdateAsync(info.BuildInformation, cancel);
 
         var connectAddress = GetConnectAddress(info, infoAddr);
 
@@ -169,7 +145,7 @@ public partial class Connector : ReactiveObject
 
         // Ask user for privacy policy acceptance by waiting here.
         Log.Debug("Prompting user for privacy policy acceptance: {Identifer} version {Version}", identifier, version);
-        _serverPrivacyPolicyInfo = info.PrivacyPolicy;
+        PrivacyPolicyInfo = info.PrivacyPolicy;
         _acceptPrivacyPolicyTcs = new TaskCompletionSource<PrivacyPolicyAcceptResult>();
 
         Status = ConnectionStatus.AwaitingPrivacyPolicyAcceptance;
@@ -204,7 +180,7 @@ public partial class Connector : ReactiveObject
 
     private void Cleanup()
     {
-        _serverPrivacyPolicyInfo = null;
+        PrivacyPolicyInfo = null;
         _acceptPrivacyPolicyTcs = null;
         PrivacyPolicyDifferentVersion = default;
     }
@@ -261,9 +237,25 @@ public partial class Connector : ReactiveObject
             // The launcher will create a new version in the Content DB that contains just the manifest.yml.
             // (or base build data overlaid if necessary)
             // The loader would still be in charge of transparently merging in the zip file at runtime.
-            //
 
-            installation = await InstallContentBundleAsync(zipFile, zipHash, metadata, cancel);
+            //
+            // EXCEPT!
+            // SS14 replays, the biggest files, don't have a manifest.yml! So that above comment is all for naught!
+            // We only ingest into the ContentDB if there isn't a manifest.yml and there *is* a base build.
+            // Why this set of requirements? ...because it's the least intrusive to make SS14 replays better.
+            // Also, we need to actually be able to access the zip as a path to give it to the launcher.
+            //
+            if (zipFile.GetEntry("manifest.yml") is null
+                && metadata.BaseBuild is not null
+                && file.TryGetLocalPath() is { } localPath)
+            {
+                installation = await RunUpdateAsync(metadata.GetBaseBuildInformation(), cancel);
+                installation = installation with { OverlayZip = localPath };
+            }
+            else
+            {
+                installation = await InstallContentBundleAsync(zipFile, zipHash, metadata, cancel);
+            }
 
             if (metadata.ServerGC == true)
                 installation = installation with { ServerGC = true };
@@ -429,12 +421,9 @@ public partial class Connector : ReactiveObject
         }
     }
 
-    private async Task<ContentLaunchInfo> RunUpdateAsync(ServerInfo info, CancellationToken cancel)
+    private async Task<ContentLaunchInfo> RunUpdateAsync(ServerBuildInformation info, CancellationToken cancel)
     {
-        // Must have been set when retrieving build info (inferred to be automatic zipping).
-        Debug.Assert(info.BuildInformation != null, "info.BuildInformation != null");
-
-        var installation = await _updater.RunUpdateForLaunchAsync(info.BuildInformation, cancel);
+        var installation = await _updater.RunUpdateForLaunchAsync(info, cancel);
         if (installation == null)
         {
             throw new ConnectException(ConnectionStatus.UpdateError);
@@ -530,6 +519,7 @@ public partial class Connector : ReactiveObject
 
         EnvVar("SS14_LOADER_CONTENT_DB", LauncherPaths.PathContentDb);
         EnvVar("SS14_LOADER_CONTENT_VERSION", launchInfo.Version.ToString());
+        EnvVar("SS14_LOADER_OVERLAY_ZIP", launchInfo.OverlayZip);
 
         // Env vars for engine modules.
         {
@@ -583,6 +573,15 @@ public partial class Connector : ReactiveObject
             var arg = startInfo.ArgumentList[i];
 
             commandBuilder.Append($" [{i}] {arg}");
+        }
+
+        // On Linux the Steam Overlay conflicts with OpenTK/GLFW on X11 systems with dead keys
+        // Unless someone finds a fix in Robust Toolbox, this is the most straightforward hotfix.
+        // Changing the environment variable in the loader and thus robust toolbox does not work,
+        // presumably because steam overlay injects before that.
+        if (Environment.OSVersion.Platform == PlatformID.Unix)
+        {
+            EnvVar("XMODIFIERS", "@im=none");
         }
 
         Log.Debug("Launch command: {LaunchCommand}", commandBuilder.ToString());
@@ -703,7 +702,7 @@ public partial class Connector : ReactiveObject
             basePath = Path.GetFullPath(Path.Combine(
                 LauncherPaths.DirLauncherInstall,
                 "..", "..", "..", "..",
-                "SS14.Loader", "bin", buildConfiguration, "net9.0"));
+                "SS14.Loader", "bin", buildConfiguration, "net10.0"));
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
@@ -745,6 +744,8 @@ public partial class Connector : ReactiveObject
                     RedirectStandardOutput = true
                 });
 
+                if (xattr is null)
+                    throw new Exception("Xattr failed to start");
                 PipeLogOutput(xattr);
 
                 await xattr.WaitForExitAsync();
@@ -821,10 +822,33 @@ public partial class Connector : ReactiveObject
 }
 
 public sealed record ContentBundleMetadata(
-    [property: JsonPropertyName("server_gc")] bool? ServerGC,
-    [property: JsonPropertyName("engine_version")] string EngineVersion,
-    [property: JsonPropertyName("base_build")] ContentBundleBaseBuild? BaseBuild
-);
+    [property: JsonPropertyName("server_gc")]
+    bool? ServerGC,
+    [property: JsonPropertyName("engine_version")]
+    string EngineVersion,
+    [property: JsonPropertyName("base_build")]
+    ContentBundleBaseBuild? BaseBuild
+)
+{
+    public ServerBuildInformation GetBaseBuildInformation()
+    {
+        if (BaseBuild == null)
+            throw new InvalidOperationException("Metadata must have base build!");
+
+        return new ServerBuildInformation
+        {
+            DownloadUrl = BaseBuild.DownloadUrl,
+            ManifestUrl = BaseBuild.ManifestUrl,
+            ManifestDownloadUrl = BaseBuild.ManifestDownloadUrl,
+            EngineVersion = EngineVersion,
+            Version = BaseBuild.Version,
+            ForkId = BaseBuild.ForkId,
+            Hash = BaseBuild.Hash,
+            ManifestHash = BaseBuild.ManifestHash,
+            Acz = false
+        };
+    }
+}
 
 public sealed record ContentBundleBaseBuild(
     [property: JsonPropertyName("fork_id")] string ForkId,

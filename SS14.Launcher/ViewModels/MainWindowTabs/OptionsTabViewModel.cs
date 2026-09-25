@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Splat;
 using SS14.Launcher.Localization;
 using SS14.Launcher.Models.ContentManagement;
@@ -30,12 +31,6 @@ public class OptionsTabViewModel : MainWindowTabViewModel
     }
     public bool DisableIncompatibleMacOS { get; }
 
-#if RELEASE
-        public bool HideDisableSigning => true;
-#else
-    public bool HideDisableSigning => false;
-#endif
-
     public override string Name => LocalizationManager.Instance.GetString("tab-options-title");
 
     public bool CompatMode
@@ -54,16 +49,6 @@ public class OptionsTabViewModel : MainWindowTabViewModel
         set
         {
             Cfg.SetCVar(CVars.LogLauncherVerbose, value);
-            Cfg.CommitConfig();
-        }
-    }
-
-    public bool DisableSigning
-    {
-        get => Cfg.GetCVar(CVars.DisableSigning);
-        set
-        {
-            Cfg.SetCVar(CVars.DisableSigning, value);
             Cfg.CommitConfig();
         }
     }
@@ -93,9 +78,9 @@ public class OptionsTabViewModel : MainWindowTabViewModel
         _engineManager.ClearAllEngines();
     }
 
-    public void ClearServerContent()
+    public async Task<bool> ClearServerContent()
     {
-        _contentManager.ClearAll();
+        return await _contentManager.ClearAll();
     }
 
     public void OpenLogDirectory()

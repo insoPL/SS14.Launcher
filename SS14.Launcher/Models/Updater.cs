@@ -14,8 +14,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Serilog;
 using Splat;
 using SS14.Launcher.Models.ContentManagement;
@@ -27,7 +26,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace SS14.Launcher.Models;
 
-public sealed partial class Updater : ReactiveObject
+public sealed partial class Updater : ObservableObject
 {
     private const int ManifestDownloadProtocolVersion = 1;
 
@@ -53,9 +52,9 @@ public sealed partial class Updater : ReactiveObject
     }
 
     // Note: these get updated from different threads. Observe responsibly.
-    [Reactive] public UpdateStatus Status { get; private set; }
-    [Reactive] public (long downloaded, long total, ProgressUnit unit)? Progress { get; private set; }
-    [Reactive] public long? Speed { get; private set; }
+    [ObservableProperty] private UpdateStatus _status;
+    [ObservableProperty] private (long downloaded, long total, ProgressUnit unit)? _progress;
+    [ObservableProperty] private long? _speed;
 
     public Exception? UpdateException;
 
@@ -191,25 +190,14 @@ public sealed partial class Updater : ReactiveObject
 
                 Log.Debug("Did not already have this content bundle, ingesting as new version {Version}", versionId);
 
-                if (metadata.BaseBuild is { } baseBuildData)
+                if (metadata.BaseBuild is not null)
                 {
                     Log.Debug("Content bundle has base build info, downloading...");
 
                     // We have a base build to download.
                     // Copy it into the new AnonymousContentBundle version before loading the rest of the zip contents.
                     var baseBuildId = await TouchOrDownloadContentUpdate(
-                        new ServerBuildInformation
-                        {
-                            DownloadUrl = baseBuildData.DownloadUrl,
-                            ManifestUrl = baseBuildData.ManifestUrl,
-                            ManifestDownloadUrl = baseBuildData.ManifestDownloadUrl,
-                            EngineVersion = metadata.EngineVersion,
-                            Version = baseBuildData.Version,
-                            ForkId = baseBuildData.ForkId,
-                            Hash = baseBuildData.Hash,
-                            ManifestHash = baseBuildData.ManifestHash,
-                            Acz = false
-                        },
+                        metadata.GetBaseBuildInformation(),
                         con,
                         moduleManifest,
                         new TransactedDownloadState(),
@@ -338,6 +326,9 @@ public sealed partial class Updater : ReactiveObject
 
         var versions = con.Query<ContentVersion>("SELECT * FROM ContentVersion ORDER BY LastUsed DESC").ToArray();
 
+        // NOTE: GetRunningClientVersions may modify DB, best to let it commit for cleanup.
+        var usedVersions = ContentManager.GetRunningClientVersions(con);
+
         var forkCounts = versions.Select(x => x.ForkId).Distinct().ToDictionary(x => x, _ => 0);
 
         var totalCount = 0;
@@ -353,9 +344,19 @@ public sealed partial class Updater : ReactiveObject
             }
             else
             {
-                Log.Debug("Culling version {ForkId}/{ForkVersion}", version.ForkId, version.ForkVersion);
-                con.Execute("DELETE FROM ContentVersion WHERE Id = @Id", new { version.Id });
-                anythingRemoved = true;
+                if (usedVersions.Contains(version.Id))
+                {
+                    Log.Debug(
+                        "Not culling version {ForkId}/{ForkVersion}: in use by running client",
+                        version.ForkId,
+                        version.ForkVersion);
+                }
+                else
+                {
+                    Log.Debug("Culling version {ForkId}/{ForkVersion}", version.ForkId, version.ForkVersion);
+                    con.Execute("DELETE FROM ContentVersion WHERE Id = @Id", new { version.Id });
+                    anythingRemoved = true;
+                }
             }
         }
 
@@ -377,10 +378,10 @@ public sealed partial class Updater : ReactiveObject
         if (anythingRemoved)
         {
             var rows = con.Execute("""
-                DELETE FROM Content
-                WHERE Id NOT IN (SELECT ContentId FROM ContentManifest)
-                    AND Id NOT IN (SELECT ContentId FROM InterruptedDownloadContent)
-                """);
+                                   DELETE FROM Content
+                                   WHERE Id NOT IN (SELECT ContentId FROM ContentManifest)
+                                       AND Id NOT IN (SELECT ContentId FROM InterruptedDownloadContent)
+                                   """);
             Log.Debug("Culled {RowsCulled} orphaned content blobs", rows);
         }
 
@@ -526,17 +527,17 @@ public sealed partial class Updater : ReactiveObject
     private static void SaveInterruptedDownload(SqliteConnection con, TransactedDownloadState state)
     {
         var interruptedId = con.ExecuteScalar<long>("""
-            INSERT INTO InterruptedDownload (Added)
-            VALUES (datetime('now'))
-            RETURNING Id
-            """);
+                                                    INSERT INTO InterruptedDownload (Added)
+                                                    VALUES (datetime('now'))
+                                                    RETURNING Id
+                                                    """);
 
         foreach (var contentId in state.DownloadedContentEntries)
         {
             con.Execute("""
-                INSERT INTO InterruptedDownloadContent(InterruptedDownloadId, ContentId)
-                VALUES (@DownloadId, @ContentId)
-                """,
+                        INSERT INTO InterruptedDownloadContent(InterruptedDownloadId, ContentId)
+                        VALUES (@DownloadId, @ContentId)
+                        """,
                 new { DownloadId = interruptedId, ContentId = contentId });
         }
     }

@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 using SS14.Launcher.Utility;
 
@@ -5,13 +6,13 @@ namespace SS14.Launcher;
 
 public static class ConfigConstants
 {
-    public const string CurrentLauncherVersion = "57";
+    public const string CurrentLauncherVersion = "61";
     public static readonly bool DoVersionCheck = true;
 
     // Refresh login tokens if they're within <this much> of expiry.
     public static readonly TimeSpan TokenRefreshThreshold = TimeSpan.FromDays(15);
 
-    // If the user leaves the launcher running for absolute ages, this is how often we'll update his login tokens.
+    // If the user leaves the launcher running for absolute ages, this is how often we'll update their login tokens.
     public static readonly TimeSpan TokenRefreshInterval = TimeSpan.FromDays(7);
 
     // The amount of time before a server is considered timed out for status checks.
@@ -39,6 +40,7 @@ public static class ConfigConstants
     public const string DownloadUrl = "https://spacestation14.com/about/nightlies/";
     public const string NewsFeedUrl = "https://spacestation14.com/post/index.xml";
     public const string TranslateUrl = "https://docs.spacestation14.com/en/general-development/contributing-translations.html";
+    public static bool IsAuthOverride;
 
     private static readonly UrlFallbackSet RobustBuildsBaseUrl = new([
         "https://robust-builds.cdn.spacestation14.com/",
@@ -64,8 +66,14 @@ public static class ConfigConstants
 
     static ConfigConstants()
     {
-        var envVarAuthUrl = Environment.GetEnvironmentVariable("SS14_LAUNCHER_OVERRIDE_AUTH");
+        var envVarAuthUrl = Environment.GetEnvironmentVariable("SS14_LAUNCHER_OVERRIDE_AUTH_URL");
         if (!string.IsNullOrEmpty(envVarAuthUrl))
-            AuthUrl = new UrlFallbackSet([envVarAuthUrl], AuthUrl.Stats);
+        {
+            Log.Information("Auth override envar detected. Switching to: {AuthUrl}", envVarAuthUrl);
+            AuthUrl = new UrlFallbackSet([envVarAuthUrl]);
+#if !DEBUG
+            IsAuthOverride = true;
+#endif
+        }
     }
 }

@@ -110,7 +110,7 @@ connecting-status-starting-client = Запуск клиента…
 # Strings for the "connecting" menu that appears when connecting to a server.
 connecting-status-not-a-content-bundle = Файл не является допустимым набором контента!
 # Strings for the "connecting" menu that appears when connecting to a server.
-connecting-update-status-checking-client-update = Проверка на обновление серверного контента…
+connecting-update-status-checking-client-update = Проверка обновлений серверного контента. . .
 # Strings for the "connecting" menu that appears when connecting to a server.
 connecting-update-status-fetching-manifest = Получение манифеста сервера…
 # Strings for the "hub settings" dialog window.
@@ -124,7 +124,7 @@ connecting-update-status-checking-engine-modules = Проверка дополн
 # Strings for the "connecting" menu that appears when connecting to a server.
 connecting-update-status-downloading-engine-modules = Скачивание дополнительных зависимостей…
 # Strings for the "direct connect" dialog window.
-direct-connect-title = Прямое подключение…
+direct-connect-title = Прямое Подключение
 # Strings for the "direct connect" dialog window.
 direct-connect-text = Введите адрес сервера для подключения:
 # Strings for the "direct connect" dialog window.
@@ -403,9 +403,9 @@ tab-development-title = { "[" }DEV]
 # Strings for the "home" tab
 tab-home-title = Главная
 # Strings for the "home" tab
-tab-home-favorite-servers = Избранные серверы:
+tab-home-favorite-servers = Избранные Серверы
 # Strings for the "home" tab
-tab-home-add-favorite = Добавить в избранное…
+tab-home-add-favorite = Добавить в избранное
 # Strings for the "home" tab
 tab-home-refresh = Обновить
 # Strings for the "home" tab
@@ -476,7 +476,7 @@ tab-development-disable-signing-desc = { "[" }DEV ONLY] Отключает пр�
 # These aren't shown to users so they're not very important
 tab-development-enable-engine-override-desc = Перезаписать путь до архивов загрузки движка из (release/ in RobustToolbox)
 # Strings for the "home" tab
-tab-home-direct-connect = Прямое подключение к серверу…
+tab-home-direct-connect = Прямое подключение к серверу
 # Strings for the "home" tab
 tab-home-favorites-guide = Помечайте серверы избранными для быстрого доступа к ним отсюда
 # Strings for the "options" tab
@@ -566,3 +566,5 @@ main-window-rosetta-desc =
     Если вы намеренно запускаете игру с помощью Rosetta 2, можете закрыть это сообщение, и оно больше не будет появляться. Однако, если вы делаете это в попытке устранить проблему, пожалуйста, отправьте отчёт об ошибке.
 main-window-intel-degrade-accept = Я понимаю и принял необходимые меры предосторожности.
 main-window-rosetta-accept = Продолжить
+tab-options-clear-content-close-client = Сперва закройте запущенные клиенты
+button-done = Готово!
